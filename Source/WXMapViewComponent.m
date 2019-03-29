@@ -96,7 +96,7 @@ static const void *componentKey = &componentKey;
     BOOL _zoomChanged;
     BOOL _isDragend;
     BOOL _showsCompass;
-
+    NSArray *_gestures;
 }
 
 - (instancetype)initWithRef:(NSString *)ref
@@ -116,6 +116,7 @@ static const void *componentKey = &componentKey;
         _showScale = [[attributes wxmap_safeObjectForKey:@"scale"] boolValue];
         _showGeolocation = [[attributes wxmap_safeObjectForKey:@"geolocation"] boolValue];
         _showsCompass = [[attributes wxmap_safeObjectForKey:@"showCompass"] boolValue];
+        _gestures = [attributes wxmap_safeObjectForKey:@"gestures"];
         if ([attributes wxmap_safeObjectForKey:@"sdkKey"]) {
             [self setAPIKey:[attributes[@"sdkKey"] objectForKey:@"ios"] ? : @""];
         }
@@ -136,9 +137,16 @@ static const void *componentKey = &componentKey;
     CGSize windowSize = window.rootViewController.view.frame.size;
     self.mapView = [[MAMapView alloc] initWithFrame:CGRectMake(0, 0, windowSize.width, windowSize.height)];
     self.mapView.showsUserLocation = _showGeolocation;
+    if (_showGeolocation) {
+        self.mapView.userTrackingMode = MAUserTrackingModeFollow;
+    }
     self.mapView.showsCompass = _showsCompass;
     self.mapView.showsLabels = YES;
     self.mapView.delegate = self;
+    self.mapView.scrollEnabled = [_gestures containsObject:@"scroll"];
+    self.mapView.zoomEnabled = [_gestures containsObject:@"zoom"];
+    self.mapView.rotateEnabled = [_gestures containsObject:@"rotate"];
+    self.mapView.rotateCameraEnabled = [_gestures containsObject:@"tilt"];
     
     return self.mapView;
 }
@@ -471,6 +479,9 @@ static const void *componentKey = &componentKey;
  */
 - (MAAnnotationView*)mapView:(MAMapView *)mapView viewForAnnotation:(id <MAAnnotation>)annotation
 {
+    if ([annotation isKindOfClass:[MAUserLocation class]]) {
+        return nil;
+    }
     if ([annotation isKindOfClass:[MAPointAnnotation class]])
     {
         MAPointAnnotation *pointAnnotation = (MAPointAnnotation *)annotation;
@@ -481,7 +492,6 @@ static const void *componentKey = &componentKey;
             return [self _generateAnnotationView:mapView viewForAnnotation:pointAnnotation];
         }
     }
-    
     return nil;
 }
 
