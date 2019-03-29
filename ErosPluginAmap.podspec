@@ -17,4 +17,5 @@ Pod::Spec.new do |s|
   s.dependency 'AMap3DMap-NO-IDFA','5.6.0'
   s.dependency 'WeexSDK'
   s.dependency 'SDWebImage', '3.7.6'
+  s.dependency 'WeexPluginLoader'
 end
